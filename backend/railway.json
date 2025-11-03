@@ -1,8 +1,0 @@
-{
-  "build": {
-    "buildCommand": "npm install"
-  },
-  "start": {
-    "startCommand": "npm start"
-  }
-}

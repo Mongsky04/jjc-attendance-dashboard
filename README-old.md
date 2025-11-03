@@ -11,6 +11,7 @@
 ## ✨ Features
 
 ### 📊 **Dashboard Utama**
+
 - ✅ **Real-time clock** dengan format Indonesia
 - ✅ **Check-in/Check-out** dengan capture selfie
 - ✅ **Live status tracking** (checked-in, completed)
@@ -18,6 +19,7 @@
 - ✅ **Today's attendance overview**
 
 ### 📷 **Camera & Image**
+
 - ✅ **Live camera capture** untuk selfie check-in/out
 - ✅ **Gallery picker** alternatif jika kamera tidak tersedia
 - ✅ **Image preview & confirmation** sebelum submit
@@ -25,6 +27,7 @@
 - ✅ **Mobile responsive** camera interface
 
 ### 📈 **Analytics & Reports**
+
 - ✅ **Monthly summary** dengan statistics cards
 - ✅ **Excel export** dengan filter date range
 - ✅ **Pagination** untuk large datasets
@@ -32,6 +35,7 @@
 - ✅ **Performance insights** analytics
 
 ### 🎨 **UI/UX**
+
 - ✅ **Dark/Light mode** toggle
 - ✅ **Responsive design** (mobile-first)
 - ✅ **Framer Motion** smooth animations
@@ -42,126 +46,164 @@
 ## 🛠️ Tech Stack
 
 ### **Frontend**
+
 - **React 18** dengan TypeScript
 - **Vite** untuk development & build
 - **Tailwind CSS** untuk styling
 - **Framer Motion** untuk animations
 - **React Router** untuk navigation
 - **Axios** untuk API calls
+- **Date-fns** untuk date manipulation
+- **React Hot Toast** untuk notifications
 
 ### **Backend**
+
 - **Node.js** dengan Express.js
 - **MongoDB Atlas** dengan Mongoose ODM
-- **JWT Authentication** dengan bcryptjs
-- **ExcelJS** untuk export functionality
-- **Multer** untuk file uploads
-- **CORS** untuk cross-origin requests
+- **ES Modules** support
+- **CORS, Helmet, Rate Limiting** untuk security
+- **ExcelJS** untuk Excel export
+- **Date-fns** untuk date operations
 
-## 🚀 Live Application
+## 🚀 Quick Start
 
-### **Production URLs:**
-- **🌐 Frontend:** https://frontend-qq9ep8bhd-zaky-ramadhans-projects.vercel.app
-- **🔧 Backend API:** https://jjc-attendance-backend.onrender.com
-- **🗄️ Database:** MongoDB Atlas (Connected)
+### Prerequisites
 
-**✅ Status:** Fully deployed and operational
-
-## 🏃‍♂️ Quick Start
-
-### **Prerequisites**
-- Node.js 18+ 
+- Node.js 18+
 - MongoDB Atlas account
 - Git
 
-### **Installation**
+### 1. Clone Repository
 
-```bash
-# Clone repository
-git clone https://github.com/Mongsky04/jjc-attendance-dashboard.git
+\`\`\`bash
+git clone https://github.com/your-username/jjc-attendance-dashboard.git
 cd jjc-attendance-dashboard
+\`\`\`
 
-# Install backend dependencies
+### 2. Backend Setup
+
+\`\`\`bash
 cd backend
 npm install
 
-# Install frontend dependencies
+# Create .env file
+
+cp .env.example .env
+\`\`\`
+
+Edit \`.env\` dengan MongoDB connection string:
+\`\`\`env
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/jjc_attendance
+PORT=5000
+NODE_ENV=development
+\`\`\`
+
+\`\`\`bash
+
+# Start backend server
+
+npm run dev
+\`\`\`
+
+### 3. Frontend Setup
+
+\`\`\`bash
 cd ../frontend
 npm install
-```
 
-### **Environment Setup**
+# Start frontend dev server
 
-```bash
-# Backend (.env)
-NODE_ENV=development
-PORT=5000
-DATABASE_URL=mongodb+srv://your-connection-string
-JWT_SECRET=your-secret-key
-FRONTEND_URL=http://localhost:3000
-
-# Frontend (.env.local)
-VITE_API_URL=http://localhost:5000/api
-VITE_APP_TITLE=JJC Attendance Dashboard
-VITE_APP_VERSION=1.0.0
-```
-
-### **Development**
-
-```bash
-# Start backend (Terminal 1)
-cd backend
 npm run dev
+\`\`\`
 
-# Start frontend (Terminal 2)
-cd frontend
-npm run dev
-```
+### 4. Access Application
 
-### **Access Application**
-- **Frontend:** http://localhost:3000
-- **Backend API:** http://localhost:5000
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:5000
 
 ## 📱 Mobile Features
 
-- **📷 Camera Access:** Live selfie capture saat check-in/out
-- **📁 Gallery Upload:** Alternatif upload foto dari galeri
-- **📱 Responsive Design:** Optimized untuk semua device sizes
-- **👆 Touch Friendly:** Button sizing dan spacing untuk mobile
-- **🍔 Hamburger Menu:** Collapsible navigation untuk mobile
-- **💨 Smooth Animations:** 60fps transitions dan micro-interactions
+- **📷 Camera Access**: Live selfie capture saat check-in/out
+- **📁 Gallery Upload**: Alternatif upload foto dari galeri
+- **📱 Responsive Design**: Optimized untuk semua device sizes
+- **👆 Touch Friendly**: Button sizing dan spacing untuk mobile
+- **🍔 Hamburger Menu**: Collapsible navigation untuk mobile
+- **💨 Smooth Animations**: 60fps transitions dan micro-interactions
 
 ## 🎯 Usage Guide
 
 ### **Daily Attendance Flow:**
-1. **Morning Check-in:**
+
+1. **Morning Check-in**:
+
    - Klik "Check-in + Selfie"
    - Ambil foto selfie atau upload dari galeri
    - Confirm foto dan otomatis tercatat jam masuk
 
-2. **Evening Check-out:**
-   - Klik "Check-out + Selfie" 
+2. **Evening Check-out**:
+
+   - Klik "Check-out + Selfie"
    - Ambil foto selfie konfirmasi
    - Sistem otomatis hitung working hours
 
-3. **View Reports:**
+3. **View Reports**:
    - Dashboard untuk overview hari ini
    - Summary page untuk rekap bulanan
    - Export Excel untuk laporan detail
 
-## 🔐 Authentication
+## � Deployment
 
-- **Auto-generated Employee ID** format: EMP{YEAR}{3-digit-number}
-- **Email-based authentication** dengan JWT tokens
-- **Secure password hashing** dengan bcryptjs
-- **Session management** dengan token refresh
+### **Quick Deploy:**
 
-## 📄 License
+```bash
+# Option 1: Vercel (Recommended)
+./deploy-vercel.sh
+
+# Option 2: Manual deployment guide
+./deploy-manual.sh
+
+# Option 3: Build for any hosting
+./build.sh
+```
+
+### **Platform Options:**
+
+- 🔥 **Vercel**: Frontend + Backend (Free tier available)
+- 🌐 **Netlify + Railway**: Frontend + Backend (Free tiers)
+- 📤 **Manual**: Any hosting provider with Node.js support
+
+**📚 Detailed Guides:**
+
+- 📖 [Complete Deployment Guide](DEPLOYMENT.md)
+- ⚡ [Quick Deploy Instructions](QUICK-DEPLOY.md)
+
+### **Environment Setup:**
+
+```bash
+# Backend (.env.production)
+NODE_ENV=production
+DATABASE_URL=mongodb+srv://your-connection-string
+JWT_SECRET=your-super-secret-key
+FRONTEND_URL=https://your-frontend-domain.com
+
+# Frontend (.env.production)
+VITE_API_URL=https://your-backend-domain.com/api
+```
+
+**🔒 Security Notes:**
+
+- Change JWT_SECRET from default value
+- Use HTTPS for camera functionality
+- Configure CORS for production domains
+
+## �📄 License
 
 This project is licensed under the MIT License.
 
 ## 👨‍💻 Developer
 
 **JJC Development Team**
+
 - Frontend: React + TypeScript + Tailwind
 - Backend: Node.js + Express + MongoDB
 - Features: Real-time attendance dengan camera capture
