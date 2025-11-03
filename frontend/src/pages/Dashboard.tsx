@@ -3,15 +3,11 @@ import { motion } from 'framer-motion'
 import AttendanceCard from '../components/AttendanceCard'
 import AttendanceTable from '../components/AttendanceTable'
 import StatisticsCards from '../components/StatisticsCards'
+import { useAuth } from '../contexts/AuthContext'
 
 const Dashboard: React.FC = () => {
+  const { user } = useAuth()
   const [refreshTrigger, setRefreshTrigger] = useState(0)
-
-  // Demo employee data - in real app, this would come from authentication
-  const currentEmployee = {
-    id: 'EMP001',
-    name: 'John Doe'
-  }
 
   const handleAttendanceChange = () => {
     setRefreshTrigger(prev => prev + 1)
@@ -42,8 +38,6 @@ const Dashboard: React.FC = () => {
         {/* Check-in/out Card */}
         <div className="lg:col-span-1">
           <AttendanceCard
-            employeeId={currentEmployee.id}
-            employeeName={currentEmployee.name}
             onAttendanceChange={handleAttendanceChange}
           />
         </div>

@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Moon, Sun, Calendar, BarChart3, Menu, X } from 'lucide-react'
+import AuthButton from './AuthButton'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -57,7 +58,10 @@ const Layout: React.FC<LayoutProps> = ({ children, isDarkMode, toggleDarkMode })
               </div>
             </div>
             
-            <div className="flex items-center">
+            <div className="flex items-center space-x-4">
+              {/* Auth Button */}
+              <AuthButton />
+
               {/* Dark Mode Toggle */}
               <button
                 onClick={toggleDarkMode}

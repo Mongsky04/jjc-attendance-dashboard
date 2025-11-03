@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Camera, Upload, X, RotateCcw, Check } from 'lucide-react'
+import { Camera, Upload, X, RotateCcw, Check, AlertCircle, Settings } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 interface CameraCaptureProps {
   onImageCapture: (imageFile: File) => void
@@ -13,6 +14,9 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onImageCapture, onClose, 
   const [capturedImage, setCapturedImage] = useState<string | null>(null)
   const [isCamera, setIsCamera] = useState(true)
   const [loading, setLoading] = useState(false)
+  const [cameraError, setCameraError] = useState<string | null>(null)
+  const [showCameraHelp, setShowCameraHelp] = useState(false)
+  const [retryCount, setRetryCount] = useState(0)
   
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -21,25 +25,97 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onImageCapture, onClose, 
   const startCamera = useCallback(async () => {
     try {
       setLoading(true)
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          facingMode: 'user',
-          width: { ideal: 640 },
-          height: { ideal: 480 }
+      setCameraError(null)
+      
+      // Check if getUserMedia is supported
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Camera API not supported in this browser')
+      }
+
+      // Try different camera configurations
+      const constraints = [
+        // Try front camera first
+        { 
+          video: { 
+            facingMode: 'user',
+            width: { ideal: 640 },
+            height: { ideal: 480 }
+          }
+        },
+        // Fallback to any camera
+        {
+          video: {
+            width: { ideal: 640 },
+            height: { ideal: 480 }
+          }
+        },
+        // Minimal constraints
+        {
+          video: true
         }
-      })
+      ]
+
+      let mediaStream: MediaStream | null = null
+      let lastError: Error | null = null
+
+      for (const constraint of constraints) {
+        try {
+          mediaStream = await navigator.mediaDevices.getUserMedia(constraint)
+          break
+        } catch (err) {
+          lastError = err as Error
+          console.warn('Camera constraint failed:', constraint, err)
+        }
+      }
+
+      if (!mediaStream) {
+        throw lastError || new Error('Cannot access camera')
+      }
+
       setStream(mediaStream)
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream
       }
+      toast.success('Kamera berhasil diakses!')
+      
     } catch (error) {
       console.error('Error accessing camera:', error)
-      alert('Tidak dapat mengakses kamera. Silakan gunakan fitur upload gambar.')
-      setIsCamera(false)
+      const errorMessage = getCameraErrorMessage(error as Error)
+      setCameraError(errorMessage)
+      toast.error(errorMessage)
+      
+      // Auto-switch to upload mode after 2 failed attempts
+      const newRetryCount = retryCount + 1
+      setRetryCount(newRetryCount)
+      if (newRetryCount >= 2) {
+        toast.success('Beralih ke mode upload file untuk kemudahan Anda.')
+        setIsCamera(false)
+      }
     } finally {
       setLoading(false)
     }
   }, [])
+
+  const getCameraErrorMessage = (error: Error) => {
+    const message = error.message?.toLowerCase() || ''
+    const isMobile = /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(navigator.userAgent)
+    
+    if (message.includes('permission') || message.includes('denied')) {
+      return isMobile 
+        ? 'Akses kamera ditolak. Buka Pengaturan browser → Izin Situs → Kamera, lalu izinkan akses.'
+        : 'Akses kamera ditolak. Klik ikon kamera di address bar untuk mengizinkan akses.'
+    } else if (message.includes('not found') || message.includes('notfound')) {
+      return 'Kamera tidak ditemukan. Pastikan perangkat memiliki kamera.'
+    } else if (message.includes('not supported') || message.includes('notsupported')) {
+      return 'Browser tidak mendukung akses kamera. Gunakan browser modern seperti Chrome, Firefox, atau Safari.'
+    } else if (message.includes('in use') || message.includes('notreadable')) {
+      return 'Kamera sedang digunakan aplikasi lain. Tutup aplikasi yang menggunakan kamera.'
+    } else if (message.includes('secure') || message.includes('https')) {
+      return 'Akses kamera memerlukan koneksi HTTPS. Gunakan https:// atau localhost.'
+    }
+    
+    return 'Tidak dapat mengakses kamera. Silakan gunakan fitur upload gambar.'
+  }
 
   const stopCamera = useCallback(() => {
     if (stream) {
@@ -93,7 +169,10 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onImageCapture, onClose, 
   const handleClose = useCallback(() => {
     stopCamera()
     setCapturedImage(null)
+    setCameraError(null)
+    setRetryCount(0)
     setIsCamera(true)
+    setShowCameraHelp(false)
     onClose()
   }, [stopCamera, onClose])
 
@@ -188,6 +267,31 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onImageCapture, onClose, 
                           <p className="text-sm text-gray-500 dark:text-gray-400">Mengakses kamera...</p>
                         </div>
                       </div>
+                    ) : cameraError ? (
+                      <div className="aspect-[4/3] bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center justify-center p-4">
+                        <div className="text-center">
+                          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                          <p className="text-sm text-red-700 dark:text-red-300 mb-4">{cameraError}</p>
+                          <div className="space-y-2">
+                            <button
+                              onClick={() => {
+                                setCameraError(null)
+                                startCamera()
+                              }}
+                              className="w-full bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors"
+                            >
+                              {retryCount >= 1 ? 'Coba Lagi' : 'Coba Lagi'}
+                            </button>
+                            <button
+                              onClick={() => setShowCameraHelp(true)}
+                              className="w-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 py-2 px-4 rounded-lg text-sm font-medium transition-colors flex items-center justify-center space-x-2"
+                            >
+                              <Settings className="w-4 h-4" />
+                              <span>Bantuan</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     ) : (
                       <video
                         ref={videoRef}
@@ -198,7 +302,7 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onImageCapture, onClose, 
                       />
                     )}
                     
-                    {stream && !loading && (
+                    {stream && !loading && !cameraError && (
                       <button
                         onClick={capturePhoto}
                         className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-16 h-16 bg-white rounded-full border-4 border-primary-500 hover:border-primary-600 transition-colors flex items-center justify-center"
@@ -271,6 +375,67 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onImageCapture, onClose, 
           {/* Hidden Canvas */}
           <canvas ref={canvasRef} className="hidden" />
         </motion.div>
+
+        {/* Camera Help Modal */}
+        {showCameraHelp && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute inset-0 bg-black/60 flex items-center justify-center p-4 z-10"
+            onClick={() => setShowCameraHelp(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-sm w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="font-semibold text-gray-900 dark:text-white">Bantuan Kamera</h4>
+                <button
+                  onClick={() => setShowCameraHelp(false)}
+                  className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                >
+                  <X className="w-4 h-4 text-gray-500" />
+                </button>
+              </div>
+              
+              <div className="space-y-4 text-sm text-gray-600 dark:text-gray-300">
+                <div>
+                  <h5 className="font-medium text-gray-900 dark:text-white mb-2">Langkah-langkah:</h5>
+                  <ol className="space-y-1 list-decimal list-inside">
+                    <li>Pastikan browser memiliki izin akses kamera</li>
+                    <li>Tutup aplikasi lain yang menggunakan kamera</li>
+                    <li>Gunakan browser modern (Chrome, Firefox, Safari)</li>
+                    <li>Pastikan menggunakan HTTPS atau localhost</li>
+                  </ol>
+                </div>
+                
+                <div>
+                  <h5 className="font-medium text-gray-900 dark:text-white mb-2">Cara mengizinkan kamera:</h5>
+                  <ul className="space-y-1 list-disc list-inside">
+                    <li>Chrome: Klik ikon kamera di address bar</li>
+                    <li>Firefox: Klik ikon kamera di kiri address bar</li>
+                    <li>Safari: Preferences {'->'} Websites {'->'} Camera</li>
+                  </ul>
+                </div>
+
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                  <p className="text-blue-700 dark:text-blue-300 text-xs">
+                    💡 <strong>Tips:</strong> Jika masih bermasalah, gunakan fitur "Galeri" untuk upload foto dari file.
+                  </p>
+                </div>
+              </div>
+              
+              <button
+                onClick={() => setShowCameraHelp(false)}
+                className="w-full mt-4 bg-primary-500 hover:bg-primary-600 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors"
+              >
+                Mengerti
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
       </motion.div>
     </AnimatePresence>
   )

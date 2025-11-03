@@ -7,6 +7,7 @@ import rateLimit from 'express-rate-limit'
 import dotenv from 'dotenv'
 import connectDB from './config/database.js'
 import attendanceRoutes from './routes/attendance.js'
+import authRoutes from './routes/auth.js'
 
 dotenv.config()
 
@@ -52,6 +53,7 @@ app.get('/health', (req, res) => {
 })
 
 // API routes
+app.use('/api/auth', authRoutes)
 app.use('/api/attendance', attendanceRoutes)
 
 // 404 handler

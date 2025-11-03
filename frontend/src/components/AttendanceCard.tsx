@@ -2,27 +2,41 @@ import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Clock, CheckCircle, XCircle, User, Camera } from 'lucide-react'
 import { attendanceAPI, AttendanceRecord } from '../api/attendance'
+import { useAuth } from '../contexts/AuthContext'
 import toast from 'react-hot-toast'
 import { format } from 'date-fns'
 import CameraCapture from './CameraCapture'
 
 interface AttendanceCardProps {
-  employeeId: string
-  employeeName: string
   onAttendanceChange?: () => void
 }
 
 const AttendanceCard: React.FC<AttendanceCardProps> = ({ 
-  employeeId, 
-  employeeName, 
   onAttendanceChange 
 }) => {
+  const { user, isAuthenticated } = useAuth()
   const [todayRecord, setTodayRecord] = useState<AttendanceRecord | null>(null)
   const [loading, setLoading] = useState(false)
   const [currentTime, setCurrentTime] = useState(new Date())
   const [showCamera, setShowCamera] = useState(false)
   const [capturedImage, setCapturedImage] = useState<File | null>(null)
   const [pendingAction, setPendingAction] = useState<'checkin' | 'checkout' | null>(null)
+
+  // Redirect if not authenticated
+  if (!isAuthenticated || !user) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 text-center"
+      >
+        <div className="text-gray-500 dark:text-gray-400">
+          <User className="w-12 h-12 mx-auto mb-4" />
+          <p>Silakan login terlebih dahulu untuk menggunakan sistem absensi.</p>
+        </div>
+      </motion.div>
+    )
+  }
 
   // Update current time every second
   useEffect(() => {
@@ -34,13 +48,17 @@ const AttendanceCard: React.FC<AttendanceCardProps> = ({
 
   // Fetch today's attendance record
   useEffect(() => {
-    fetchTodayAttendance()
-  }, [employeeId])
+    if (user?.employeeId) {
+      fetchTodayAttendance()
+    }
+  }, [user?.employeeId])
 
   const fetchTodayAttendance = async () => {
+    if (!user?.employeeId) return
+    
     try {
       const response = await attendanceAPI.getTodayAttendance()
-      const userRecord = response.data.find(record => record.employeeId === employeeId)
+      const userRecord = response.data.find(record => record.employeeId === user.employeeId)
       setTodayRecord(userRecord || null)
     } catch (error) {
       console.error('Error fetching today attendance:', error)
@@ -63,6 +81,8 @@ const AttendanceCard: React.FC<AttendanceCardProps> = ({
   }
 
   const processAttendance = async (imageFile: File) => {
+    if (!user?.employeeId || !user?.name) return
+    
     setLoading(true)
     try {
       // Convert image to base64
@@ -75,10 +95,10 @@ const AttendanceCard: React.FC<AttendanceCardProps> = ({
       const base64Image = await base64Promise
       
       if (pendingAction === 'checkin') {
-        await attendanceAPI.checkIn(employeeId, employeeName, base64Image)
+        await attendanceAPI.checkIn(user.employeeId, user.name, base64Image)
         toast.success('Berhasil check-in! Selamat bekerja! 🎉')
       } else if (pendingAction === 'checkout') {
-        await attendanceAPI.checkOut(employeeId, base64Image)
+        await attendanceAPI.checkOut(user.employeeId, base64Image)
         toast.success('Berhasil check-out! Terima kasih atas kerja kerasnya! 👏')
       }
       
@@ -90,7 +110,6 @@ const AttendanceCard: React.FC<AttendanceCardProps> = ({
       setLoading(false)
       setShowCamera(false)
       setPendingAction(null)
-      setCapturedImage(null)
     }
   }
 
@@ -139,10 +158,10 @@ const AttendanceCard: React.FC<AttendanceCardProps> = ({
           </div>
           <div>
             <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
-              {employeeName}
+              {user.name}
             </h3>
             <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-              ID: {employeeId}
+              ID: {user.employeeId}
             </p>
           </div>
         </div>
