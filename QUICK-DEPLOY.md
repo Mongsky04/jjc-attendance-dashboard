@@ -3,6 +3,7 @@
 ## 🎯 Fastest Deployment Options
 
 ### Option 1: 🔥 **Vercel (All-in-One)**
+
 **Recommended for beginners - Everything in one platform**
 
 ```bash
@@ -14,6 +15,7 @@ npm install -g vercel
 ```
 
 **OR Manual Vercel:**
+
 1. Deploy backend: `cd backend && vercel --prod`
 2. Copy backend URL
 3. Update `frontend/.env.production` with backend URL
@@ -22,6 +24,7 @@ npm install -g vercel
 ---
 
 ### Option 2: 🌐 **Netlify + Railway**
+
 **Great free tier options**
 
 ```bash
@@ -30,12 +33,14 @@ npm install -g vercel
 ```
 
 **Quick Steps:**
+
 1. **Backend**: Push to GitHub → Connect to Railway → Set env vars
 2. **Frontend**: Push to GitHub → Connect to Netlify → Set build settings
 
 ---
 
 ### Option 3: 📤 **Manual Upload**
+
 **For any hosting provider**
 
 ```bash
@@ -51,12 +56,14 @@ cd frontend && npm run build
 ## 🔧 Required Environment Variables
 
 ### Backend:
+
 - `NODE_ENV=production`
 - `DATABASE_URL=mongodb+srv://...` (already configured)
 - `JWT_SECRET=your-secret-key` (CHANGE THIS!)
 - `FRONTEND_URL=https://your-frontend-domain.com`
 
 ### Frontend:
+
 - `VITE_API_URL=https://your-backend-domain.com/api`
 
 ---
@@ -80,6 +87,7 @@ cd frontend && npm run build
 4. **Test HTTPS**: Camera requires HTTPS in production
 
 **Platform Links:**
+
 - 🔥 [Vercel](https://vercel.com)
 - 🌐 [Netlify](https://netlify.com)
 - 🚂 [Railway](https://railway.app)
