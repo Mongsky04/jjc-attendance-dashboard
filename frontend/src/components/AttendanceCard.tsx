@@ -81,7 +81,7 @@ const AttendanceCard: React.FC<AttendanceCardProps> = ({
   }
 
   const processAttendance = async (imageFile: File) => {
-    if (!user?.employeeId || !user?.name) return
+    if (!user?.employeeId || !user?.name || !capturedImage) return
     
     setLoading(true)
     try {

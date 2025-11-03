@@ -3,10 +3,8 @@ import { motion } from 'framer-motion'
 import AttendanceCard from '../components/AttendanceCard'
 import AttendanceTable from '../components/AttendanceTable'
 import StatisticsCards from '../components/StatisticsCards'
-import { useAuth } from '../contexts/AuthContext'
 
 const Dashboard: React.FC = () => {
-  const { user } = useAuth()
   const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   const handleAttendanceChange = () => {

@@ -18,6 +18,7 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onImageCapture, onClose, 
   const [showCameraHelp, setShowCameraHelp] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
   const [isInitializing, setIsInitializing] = useState(false)
+  const [videoReady, setVideoReady] = useState(false)
   
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -81,8 +82,50 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onImageCapture, onClose, 
 
       setStream(mediaStream)
       if (videoRef.current) {
+        console.log('Menghubungkan stream ke video element...')
         videoRef.current.srcObject = mediaStream
+        
+        // Wait for video to be ready
+        videoRef.current.onloadedmetadata = () => {
+          if (videoRef.current) {
+            console.log('Video metadata loaded, dimensions:', videoRef.current.videoWidth, 'x', videoRef.current.videoHeight)
+            setVideoReady(true)
+            videoRef.current.play().catch(err => {
+              console.error('Play error after metadata:', err)
+            })
+          }
+        }
+        
+        // Handle video playing event
+        videoRef.current.onplaying = () => {
+          console.log('Video mulai playing')
+          setVideoReady(true)
+        }
+        
+        // Add error handler
+        videoRef.current.onerror = (e) => {
+          console.error('Video element error:', e)
+        }
+        
+                // Backup: try to play immediately
+        setTimeout(() => {
+          if (videoRef.current && videoRef.current.paused) {
+            console.log('Backup: Mencoba play video...')
+            videoRef.current.play().catch(err => {
+              console.error('Backup play error:', err)
+            })
+          }
+        }, 100)
+        
+        // Force video ready after timeout if still not ready
+        setTimeout(() => {
+          if (!videoReady && videoRef.current && videoRef.current.videoWidth > 0) {
+            console.log('Force setting video ready after timeout')
+            setVideoReady(true)
+          }
+        }, 2000)
       }
+      
       toast.success('Kamera berhasil diakses!')
       
     } catch (error) {
@@ -132,6 +175,7 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onImageCapture, onClose, 
       stream.getTracks().forEach(track => track.stop())
       setStream(null)
     }
+    setVideoReady(false)
   }, [stream])
 
   const capturePhoto = useCallback(() => {
@@ -184,6 +228,7 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onImageCapture, onClose, 
     setIsCamera(true)
     setShowCameraHelp(false)
     setIsInitializing(false)
+    setVideoReady(false)
     onClose()
   }, [stopCamera, onClose])
 
@@ -331,13 +376,33 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onImageCapture, onClose, 
                         </div>
                       </div>
                     ) : (
-                      <video
-                        ref={videoRef}
-                        autoPlay
-                        playsInline
-                        muted
-                        className="w-full aspect-[4/3] bg-black rounded-lg object-cover"
-                      />
+                      <div className="relative">
+                        <video
+                          ref={videoRef}
+                          autoPlay
+                          playsInline
+                          muted
+                          className="w-full aspect-[4/3] bg-black rounded-lg object-cover"
+                          style={{ transform: 'scaleX(-1)' }} // Mirror for selfie
+                        />
+                        
+                        {/* Video loading overlay */}
+                        {stream && !videoReady && (
+                          <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
+                            <div className="text-center text-white">
+                              <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                              <p className="text-sm">Menyiapkan kamera...</p>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Camera info overlay */}
+                        {stream && videoReady && (
+                          <div className="absolute top-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                            Kamera Aktif
+                          </div>
+                        )}
+                      </div>
                     )}
                     
                     {stream && !loading && !cameraError && (

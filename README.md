@@ -133,7 +133,47 @@ npm run dev
    - Summary page untuk rekap bulanan
    - Export Excel untuk laporan detail
 
-## 📄 License
+## � Deployment
+
+### **Quick Deploy:**
+```bash
+# Option 1: Vercel (Recommended)
+./deploy-vercel.sh
+
+# Option 2: Manual deployment guide
+./deploy-manual.sh
+
+# Option 3: Build for any hosting
+./build.sh
+```
+
+### **Platform Options:**
+- 🔥 **Vercel**: Frontend + Backend (Free tier available)
+- 🌐 **Netlify + Railway**: Frontend + Backend (Free tiers)
+- 📤 **Manual**: Any hosting provider with Node.js support
+
+**📚 Detailed Guides:**
+- 📖 [Complete Deployment Guide](DEPLOYMENT.md)
+- ⚡ [Quick Deploy Instructions](QUICK-DEPLOY.md)
+
+### **Environment Setup:**
+```bash
+# Backend (.env.production)
+NODE_ENV=production
+DATABASE_URL=mongodb+srv://your-connection-string
+JWT_SECRET=your-super-secret-key
+FRONTEND_URL=https://your-frontend-domain.com
+
+# Frontend (.env.production)
+VITE_API_URL=https://your-backend-domain.com/api
+```
+
+**🔒 Security Notes:**
+- Change JWT_SECRET from default value
+- Use HTTPS for camera functionality
+- Configure CORS for production domains
+
+## �📄 License
 
 This project is licensed under the MIT License.
 
