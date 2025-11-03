@@ -17,14 +17,21 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onImageCapture, onClose, 
   const [cameraError, setCameraError] = useState<string | null>(null)
   const [showCameraHelp, setShowCameraHelp] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
+  const [isInitializing, setIsInitializing] = useState(false)
   
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const startCamera = useCallback(async () => {
+    // Prevent multiple simultaneous camera access attempts
+    if (loading || isInitializing || stream) {
+      return
+    }
+
     try {
       setLoading(true)
+      setIsInitializing(true)
       setCameraError(null)
       
       // Check if getUserMedia is supported
@@ -85,16 +92,19 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onImageCapture, onClose, 
       toast.error(errorMessage)
       
       // Auto-switch to upload mode after 2 failed attempts
-      const newRetryCount = retryCount + 1
-      setRetryCount(newRetryCount)
-      if (newRetryCount >= 2) {
-        toast.success('Beralih ke mode upload file untuk kemudahan Anda.')
-        setIsCamera(false)
-      }
+      setRetryCount(prev => {
+        const newCount = prev + 1
+        if (newCount >= 2) {
+          toast.success('Beralih ke mode upload file untuk kemudahan Anda.')
+          setIsCamera(false)
+        }
+        return newCount
+      })
     } finally {
       setLoading(false)
+      setIsInitializing(false)
     }
-  }, [])
+  }, [retryCount, loading, isInitializing, stream]) // Add protection flags
 
   const getCameraErrorMessage = (error: Error) => {
     const message = error.message?.toLowerCase() || ''
@@ -173,24 +183,42 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onImageCapture, onClose, 
     setRetryCount(0)
     setIsCamera(true)
     setShowCameraHelp(false)
+    setIsInitializing(false)
     onClose()
   }, [stopCamera, onClose])
 
   const retakePhoto = useCallback(() => {
     setCapturedImage(null)
-    if (isCamera) {
+    if (isCamera && !loading) {
       startCamera()
     }
-  }, [isCamera, startCamera])
+  }, [isCamera, loading, startCamera])
 
   React.useEffect(() => {
-    if (isOpen && isCamera) {
-      startCamera()
+    let isMounted = true
+    
+    if (isOpen && isCamera && !stream && !loading && !cameraError && !isInitializing) {
+      // Add a small delay to prevent rapid re-triggers
+      const timeoutId = setTimeout(() => {
+        if (isMounted && !loading && !isInitializing) {
+          startCamera()
+        }
+      }, 200)
+      
+      return () => {
+        clearTimeout(timeoutId)
+        isMounted = false
+      }
     }
+    
+    // Cleanup function
     return () => {
-      stopCamera()
+      isMounted = false
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop())
+      }
     }
-  }, [isOpen, isCamera, startCamera, stopCamera])
+  }, [isOpen, isCamera, stream, loading, cameraError, isInitializing]) // Add isInitializing
 
   if (!isOpen) return null
 
@@ -229,22 +257,30 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onImageCapture, onClose, 
                 <div className="flex rounded-lg bg-gray-100 dark:bg-gray-700 p-1">
                   <button
                     onClick={() => {
-                      setIsCamera(true)
-                      startCamera()
+                      if (!isCamera) {
+                        setIsCamera(true)
+                        setCameraError(null)
+                        setRetryCount(0)
+                        // startCamera will be called by useEffect
+                      }
                     }}
                     className={`flex-1 flex items-center justify-center space-x-2 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
                       isCamera
                         ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
                         : 'text-gray-600 dark:text-gray-300'
                     }`}
+                    disabled={loading}
                   >
                     <Camera className="w-4 h-4" />
                     <span>Kamera</span>
                   </button>
                   <button
                     onClick={() => {
-                      setIsCamera(false)
-                      stopCamera()
+                      if (isCamera) {
+                        setIsCamera(false)
+                        stopCamera()
+                        setCameraError(null)
+                      }
                     }}
                     className={`flex-1 flex items-center justify-center space-x-2 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
                       !isCamera
@@ -276,11 +312,13 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onImageCapture, onClose, 
                             <button
                               onClick={() => {
                                 setCameraError(null)
+                                setRetryCount(0) // Reset retry count
                                 startCamera()
                               }}
                               className="w-full bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors"
+                              disabled={loading}
                             >
-                              {retryCount >= 1 ? 'Coba Lagi' : 'Coba Lagi'}
+                              {loading ? 'Mencoba...' : 'Coba Lagi'}
                             </button>
                             <button
                               onClick={() => setShowCameraHelp(true)}
